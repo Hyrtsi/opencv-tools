@@ -23,8 +23,6 @@ def saturate(img):
 	return imgrgb 
 
 def analyze_image(img):
-	channels = [0]
-	mask = img
 	color = ('b','g','r')
 	for k,color in enumerate(color):
 		histogram = cv.calcHist([img],[k],None,[256],[0,256])
