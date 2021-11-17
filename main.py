@@ -57,7 +57,7 @@ def main():
 	if img is None:
 		sys.exit('Could not read the image')
 
-	#img = saturate(img)
+	img = saturate(img)
 	draw_image(img)
 	analyze_image(img)
 
