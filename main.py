@@ -4,7 +4,7 @@ import matplotlib.animation as animation
 from matplotlib.widgets import Slider
 import cv2 as cv
 
-FILE_NAME = 'res/onlyred.png' #'res/sunset.jpg'
+FILE_NAME = 'res/mountain-and-lake.jpg'
 
 # https://matplotlib.org/3.3.1/gallery/widgets/slider_demo.html
 # https://sodocumentation.net/matplotlib/topic/6983/animations-and-interactive-plotting
@@ -29,7 +29,7 @@ def saturate(img, satadj):
 	return imgrgb 
 
 
-def exposure(img, exp_adj):
+def brightness(img, exp_adj):
 	imghsv = cv.cvtColor(img, cv.COLOR_RGB2HSV).astype("float32")
 	(h, s, v) = cv.split(imghsv)
 	
@@ -46,7 +46,6 @@ def plt_hist(ax, img, color):
 	k = colors.index(color)
 	histogram = cv.calcHist([img],[k],None,[256],[0,256])
 	plt_handle, = ax.plot(histogram, color=color)
-		# plt.xlim([0,256]) # necessary?
 
 	return plt_handle
 
@@ -58,7 +57,7 @@ def main():
 
 	ax2.set_xlim(0.0,1280.0)
 
-	fig.suptitle('Saturation demo', fontsize=16)
+	fig.suptitle('Image toner', fontsize=16)
 	
 	# Calculate the initial value for the image
 	img = cv.imread(cv.samples.findFile(FILE_NAME)) # assume: BGR
@@ -68,13 +67,13 @@ def main():
 	# Take the handle for later
 	imobj = ax2.imshow(img)
 
-	# Axes for the saturation and exposure
+	# Axes for the saturation and brightness
 	ax_sat = plt.axes([0.25, .03, 0.50, 0.02])
 	ax_exp = plt.axes([0.25, 0.01, 0.50, 0.02])
 
 	# Slider
 	sat_slider = Slider(ax_sat, 'Saturation', 0, 20, valinit=1)
-	exp_slider = Slider(ax_exp, 'Exposure', -10, 10, valinit=1)
+	exp_slider = Slider(ax_exp, 'Brightness', -10, 10, valinit=1)
 
 	# Histogram
 	colors = ('r', 'g', 'b')
@@ -88,7 +87,7 @@ def main():
 		newimg = img
 		# update image
 		newimg = saturate(newimg, sat_slider.val)
-		newimg = exposure(newimg,val)
+		newimg = brightness(newimg,val)
 
 		imobj.set_data(newimg)
 
@@ -107,7 +106,7 @@ def main():
 	def update_exp(val):
 		newimg = img
 		newimg = saturate(newimg, sat_slider.val)
-		newimg = exposure(newimg,val)
+		newimg = brightness(newimg,val)
 		imobj.set_data(newimg)
 
 		# update also the histogram
