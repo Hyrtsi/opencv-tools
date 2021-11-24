@@ -3,10 +3,15 @@ My repo for opencv practise
 
 ## What
 
+- Load an image
+- Adjust the saturation and brightness
+
 ## Installation
 
-- Install dependencies: `opencv`
+- Install dependencies: `opencv`, `matplotlib`, `numpy`
 
-https://docs.opencv.org/4.5.4/d2/de6/tutorial_py_setup_in_ubuntu.html
+## Usage
 
-![sunset](https://user-images.githubusercontent.com/17768288/141688847-b82e2c26-9b2d-4a9d-b276-ab8188cfb54b.jpg)
+- `python3 main.py`
+
+![image](https://user-images.githubusercontent.com/17768288/143311335-f7bcbaa6-4644-432b-b994-a68007290566.png)
