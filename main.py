@@ -14,7 +14,7 @@ def saturate(img):
 	
 	# 1.0 means no change. Under it converts to greyscale
 	# and about 1.5 is immensely high 
-	satadj = 999			
+	satadj = 1.5			
 	s = s*satadj
 	s = np.clip(s,0,255)
 	imghsv = cv.merge([h,s,v])

@@ -9,25 +9,48 @@ FILE_NAME = 'res/sunset.jpg'
 # https://matplotlib.org/3.3.1/gallery/widgets/slider_demo.html
 # https://sodocumentation.net/matplotlib/topic/6983/animations-and-interactive-plotting
 
+
 # img:
-# image in opencv format
+# image in rbg
 #
 # satadj:
 # 1.0 means no change. Under it converts to greyscale
 # and about 1.5 is immensely high 
 def saturate(img, satadj):
-
-	imghsv = cv.cvtColor(img, cv.COLOR_BGR2HSV).astype("float32")
+	imghsv = cv.cvtColor(img, cv.COLOR_RGB2HSV).astype("float32")
 	(h, s, v) = cv.split(imghsv)
 	
-
 	s = s*satadj
 	s = np.clip(s,0,255)
 	imghsv = cv.merge([h,s,v])
-	imgrgb = cv.cvtColor(imghsv.astype("uint8"), cv.COLOR_HSV2BGR)
+	imgbgr = cv.cvtColor(imghsv.astype("uint8"), cv.COLOR_HSV2RGB)
 
-	return imgrgb 
+	# assume: return rgb
+	return imgbgr 
 
+
+def exposure(img, exp_adj):
+	# The multiply way:
+	#img2 = img.copy().astype("float32")
+	#img2 *= exp_adj
+	#img2 = np.clip(img2, 0, 255)
+	
+	# The add way:
+	#img2 = img.copy().astype("float32")
+	#cv.add(img, exp_adj, img2)
+	#img2 = cv.cvtColor(img2.astype("uint8"), cv.COLOR_BAYER_BG2BGR)
+	#return img2
+
+	imghsv = cv.cvtColor(img, cv.COLOR_RGB2HSV).astype("float32")
+	(h, s, v) = cv.split(imghsv)
+	
+	v = v*exp_adj
+	v = np.clip(v,0,255)
+	imghsv = cv.merge([h,s,v])
+	imgbgr = cv.cvtColor(imghsv.astype("uint8"), cv.COLOR_HSV2RGB)
+
+	# assume: return rgb
+	return imgbgr 
 
 def plt_hist(ax, img, color):
 	colors = ['b', 'g', 'r']
@@ -49,18 +72,20 @@ def main():
 	fig.suptitle('Saturation demo', fontsize=16)
 	
 	# Calculate the initial value for the image
-	img = cv.imread(cv.samples.findFile(FILE_NAME))
-	img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+	img = cv.imread(cv.samples.findFile(FILE_NAME)) # assume: BGR
+	img = cv.cvtColor(img, cv.COLOR_BGR2RGB) # plt assumes RGB
 
 	# Draw the image
 	# Take the handle for later
 	imobj = ax2.imshow(img)
 
-	# Axes for the saturation
-	ax_sat = plt.axes([0.25, .03, 0.50, 0.02]) # location?
+	# Axes for the saturation and exposure
+	ax_sat = plt.axes([0.25, .03, 0.50, 0.02])
+	ax_exp = plt.axes([0.25, 0.01, 0.50, 0.02])
 
 	# Slider
-	sat_slider = Slider(ax_sat, 'Saturation', 0, 2, valinit=1)
+	sat_slider = Slider(ax_sat, 'Saturation', 0, 20, valinit=1)
+	exp_slider = Slider(ax_exp, 'Exposure', -10, 10, valinit=1)
 
 	# Calculate the initial value for the histogram
 	# TODO: rgb
@@ -74,6 +99,8 @@ def main():
 		newimg = img
 		# update image
 		newimg = saturate(newimg, sat_slider.val)
+		newimg = exposure(newimg,val)
+
 		imobj.set_data(newimg)
 
 		# update also the histogram
@@ -85,8 +112,21 @@ def main():
 		# redraw canvas while idle
 		fig.canvas.draw_idle()
 
+	def update_exp(val):
+		newimg = img
+		newimg = saturate(newimg, sat_slider.val)
+		newimg = exposure(newimg,val)
+		imobj.set_data(newimg)
+		histogram = cv.calcHist([newimg],[2],None,[256],[0,256])
+		hist_y.set_ydata(histogram)
+
+		# redraw canvas while idle
+		fig.canvas.draw_idle()
+
 	# call update function on slider value change
 	sat_slider.on_changed(update)
+	exp_slider.on_changed(update_exp)
+
 
 	plt.show()
 	
