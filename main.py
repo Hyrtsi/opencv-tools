@@ -1,119 +1,131 @@
-#!/usr/bin/env python3
-
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from matplotlib.widgets import Slider
 import cv2 as cv
-import sys
-from matplotlib import pyplot as plt
 
-FILE_NAME = 'res/sunset.jpg'
+FILE_NAME = 'res/onlyred.png' #'res/sunset.jpg'
 
-def saturate(img):
+# https://matplotlib.org/3.3.1/gallery/widgets/slider_demo.html
+# https://sodocumentation.net/matplotlib/topic/6983/animations-and-interactive-plotting
 
-	imghsv = cv.cvtColor(img, cv.COLOR_BGR2HSV).astype("float32")
+
+# img:
+# image in rbg
+#
+# satadj:
+# 1.0 means no change. Under it converts to greyscale
+# and about 1.5 is immensely high 
+def saturate(img, satadj):
+	imghsv = cv.cvtColor(img, cv.COLOR_RGB2HSV).astype("float32")
 	(h, s, v) = cv.split(imghsv)
 	
-	# 1.0 means no change. Under it converts to greyscale
-	# and about 1.5 is immensely high 
-	satadj = 1.5			
 	s = s*satadj
 	s = np.clip(s,0,255)
 	imghsv = cv.merge([h,s,v])
-	imgrgb = cv.cvtColor(imghsv.astype("uint8"), cv.COLOR_HSV2BGR)
+	imgrgb = cv.cvtColor(imghsv.astype("uint8"), cv.COLOR_HSV2RGB)
 
+	# assume: return rgb
 	return imgrgb 
 
-def analyze_image(img):
-	color = ('b','g','r')
-	for k,color in enumerate(color):
-		histogram = cv.calcHist([img],[k],None,[256],[0,256])
-		plt.plot(histogram, color = color)
-		plt.xlim([0,256])
-	plt.show()
 
+def exposure(img, exp_adj):
+	imghsv = cv.cvtColor(img, cv.COLOR_RGB2HSV).astype("float32")
+	(h, s, v) = cv.split(imghsv)
+	
+	v = v*exp_adj
+	v = np.clip(v,0,255)
+	imghsv = cv.merge([h,s,v])
+	imgrgb = cv.cvtColor(imghsv.astype("uint8"), cv.COLOR_HSV2RGB)
 
-# def draw_hist_2(img):
-# 	hist = cv.calcHist([img],[0],None,[256],[0,256])
-# 	plt.plot(hist)
-# 	plt.show()
+	# assume: return rgb
+	return imgrgb 
 
+def plt_hist(ax, img, color):
+	colors = ['b', 'g', 'r']
+	k = colors.index(color)
+	histogram = cv.calcHist([img],[k],None,[256],[0,256])
+	plt_handle, = ax.plot(histogram, color=color)
+		# plt.xlim([0,256]) # necessary?
 
-
-def draw_image(img):
-	img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-	#cv.imshow('Display window', img)
-	#key_input = cv.waitKey(0)
-	plt.imshow(img)
-	plt.show()
+	return plt_handle
 
 def main():
-	print('hello world')
+	fig, ax = plt.subplots(1, 2,figsize=(27.0,27.0))
 	
-	# Display an image with opencv imshow
+	ax1 = ax[0] # The histogram
+	ax2 = ax[1]	# The image
 
-	img = cv.imread(cv.samples.findFile(FILE_NAME))
+	ax2.set_xlim(0.0,1280.0)
 
-	if img is None:
-		sys.exit('Could not read the image')
+	fig.suptitle('Saturation demo', fontsize=16)
+	
+	# Calculate the initial value for the image
+	img = cv.imread(cv.samples.findFile(FILE_NAME)) # assume: BGR
+	img = cv.cvtColor(img, cv.COLOR_BGR2RGB) # plt assumes RGB
 
-	img = saturate(img)
-	draw_image(img)
-	analyze_image(img)
+	# Draw the image
+	# Take the handle for later
+	imobj = ax2.imshow(img)
 
-	# img2 = plt.imread(FILE_NAME)
-	# if img2 is None:
-	# 	sys.exit('')
-	# draw_hist_2(img2)
+	# Axes for the saturation and exposure
+	ax_sat = plt.axes([0.25, .03, 0.50, 0.02])
+	ax_exp = plt.axes([0.25, 0.01, 0.50, 0.02])
+
+	# Slider
+	sat_slider = Slider(ax_sat, 'Saturation', 0, 20, valinit=1)
+	exp_slider = Slider(ax_exp, 'Exposure', -10, 10, valinit=1)
+
+	# Histogram
+	colors = ('r', 'g', 'b')
+	lines = []
+	for k,color in enumerate(colors):
+		histogram = cv.calcHist([img],[k],None,[256],[0,256])
+		line, = ax1.plot(histogram,color=color)
+		lines.append(line)
+
+	def update_sat(val):	
+		newimg = img
+		# update image
+		newimg = saturate(newimg, sat_slider.val)
+		newimg = exposure(newimg,val)
+
+		imobj.set_data(newimg)
+
+		# update also the histogram
+
+		colors = ('r', 'g', 'b')
+		for k,color in enumerate(colors):
+			histogram = cv.calcHist([newimg],[k],None,[256],[0,256])
+			lines[k].set_ydata(histogram)
 
 
 
-#####
+		# redraw canvas while idle
+		fig.canvas.draw_idle()
 
-if __name__ == "__main__":
-	main()
+	def update_exp(val):
+		newimg = img
+		newimg = saturate(newimg, sat_slider.val)
+		newimg = exposure(newimg,val)
+		imobj.set_data(newimg)
 
-###############
+		# update also the histogram
 
-plt.ion()
-class DynamicUpdate():
-    #Suppose we know the x range
-    min_x = 0
-    max_x = 10
+		colors = ('b', 'g', 'r')
+		for k,color in enumerate(colors):
+			histogram = cv.calcHist([newimg],[k],None,[256],[0,256])
+			lines[k].set_ydata(histogram)
 
-    def on_launch(self):
-        #Set up plot
-        self.figure, self.ax = plt.subplots()
-        self.lines, = self.ax.plot([],[], 'o')
-        #Autoscale on unknown axis and known lims on the other
-        self.ax.set_autoscaley_on(True)
-        self.ax.set_xlim(self.min_x, self.max_x)
-        #Other stuff
-        self.ax.grid()
-        ...
+		# redraw canvas while idle
+		fig.canvas.draw_idle()
 
-    def on_running(self, xdata, ydata):
-        #Update data (with the new _and_ the old points)
-        self.lines.set_xdata(xdata)
-        self.lines.set_ydata(ydata)
-        #Need both of these in order to rescale
-        self.ax.relim()
-        self.ax.autoscale_view()
-        #We need to draw *and* flush
-        self.figure.canvas.draw()
-        self.figure.canvas.flush_events()
+	# call update function on slider value change
+	sat_slider.on_changed(update_sat)
+	exp_slider.on_changed(update_exp)
 
-    #Example
-    def __call__(self):
-        import numpy as np
-        import time
-        self.on_launch()
-        xdata = []
-        ydata = []
-        for x in np.arange(0,1000,0.5):
-            xdata.append(x)
-            ydata.append(np.exp(-x**2)+10*np.exp(-(x-7)**2))
-            self.on_running(xdata, ydata)
-            time.sleep(0.1)
-        return xdata, ydata
 
-d = DynamicUpdate()
-d()
+	plt.show()
+	
+
+main()
