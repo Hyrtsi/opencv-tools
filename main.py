@@ -86,8 +86,8 @@ def main():
 	def update_sat(val):	
 		newimg = img
 		# update image
-		newimg = saturate(newimg, sat_slider.val)
-		newimg = brightness(newimg,val)
+		newimg = saturate(newimg, val)
+		newimg = brightness(newimg, exp_slider.val)
 
 		imobj.set_data(newimg)
 
@@ -106,7 +106,7 @@ def main():
 	def update_exp(val):
 		newimg = img
 		newimg = saturate(newimg, sat_slider.val)
-		newimg = brightness(newimg,val)
+		newimg = brightness(newimg, val)
 		imobj.set_data(newimg)
 
 		# update also the histogram
