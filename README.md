@@ -21,8 +21,3 @@ Goals:
 - `python3 main.py`
 
 ![image](https://user-images.githubusercontent.com/17768288/143311335-f7bcbaa6-4644-432b-b994-a68007290566.png)
-
-
-## Questions, contribution
-
-eljas.hyyrynen@anomalia.io
