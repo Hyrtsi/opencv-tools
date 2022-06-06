@@ -14,7 +14,9 @@ Goals:
 
 ## Installation
 
-- Install dependencies: `opencv`, `matplotlib`, `numpy`
+- Install dependencies: `opencv`, `matplotlib`, `numpy`, `sklearn`
+
+TODO: `requirements.txt`
 
 ## Usage
 
